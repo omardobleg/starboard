@@ -1,7 +1,7 @@
 # --- Stage 1: Build ---
 FROM golang:1.21-alpine AS builder
 
-# Git is required to clone and fetch dependencies
+# Install git
 RUN apk add --no-cache git
 
 WORKDIR /src
@@ -9,13 +9,11 @@ WORKDIR /src
 # 1. Clone the repo
 RUN git clone https://github.com/gzuidhof/starboard-cli.git .
 
-# 2. Move into the actual Go source folder
+# 2. Move into the directory where the Go code and go.mod actually live
 WORKDIR /src/starboard
 
-# 3. Setup the module environment
-# The repo is older and lacks a go.mod, so we create one and tidy it
-RUN go mod init github.com/gzuidhof/starboard-cli && \
-    go mod tidy
+# 3. Download the dependencies defined in the existing go.mod
+RUN go mod download
 
 # 4. Build the binary
 RUN CGO_ENABLED=0 go build -o /app/starboard .
@@ -24,11 +22,11 @@ RUN CGO_ENABLED=0 go build -o /app/starboard .
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 
-# Copy the fresh ARM64 binary from the builder
+# Copy the ARM64 binary we just built
 COPY --from=builder /app/starboard /usr/local/bin/starboard
 
 WORKDIR /notebooks
 EXPOSE 8000
 
-# Start the server on all interfaces so Dokploy can route to it
+# Start the server
 ENTRYPOINT ["starboard", "serve", "--host", "0.0.0.0", "--port", "8000", "."]
