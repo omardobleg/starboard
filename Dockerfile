@@ -1,7 +1,7 @@
 # --- Stage 1: Build ---
 FROM golang:1.21-alpine AS builder
 
-# Install git
+# Git is required to fetch dependencies
 RUN apk add --no-cache git
 
 WORKDIR /src
@@ -9,22 +9,16 @@ WORKDIR /src
 # 1. Clone the repo
 RUN git clone https://github.com/gzuidhof/starboard-cli.git .
 
-# 2. Move into the actual code directory
-# The repo structure has the Go files inside the /starboard folder
-WORKDIR /src/starboard
-
-# 3. Setup the module and build
-# We initialize it locally so it doesn't try to find a remote go.mod
-RUN go mod init github.com/gzuidhof/starboard-cli && \
-    go mod tidy
-
-RUN CGO_ENABLED=0 go build -o /app/starboard .
+# 2. Build the binary
+# We tell Go to build the package located in the 'starboard' directory.
+# This will automatically use the go.mod found in the root.
+RUN CGO_ENABLED=0 go build -o /app/starboard ./starboard
 
 # --- Stage 2: Runner ---
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 
-# Copy the binary from the builder
+# Copy the binary from the builder stage
 COPY --from=builder /app/starboard /usr/local/bin/starboard
 
 WORKDIR /notebooks
