@@ -1,5 +1,5 @@
 # Use a lightweight base
-FROM arm64v8/alpine:latest
+FROM arm32v7/alpine:latest
 
 # Install curl to download the binary
 RUN apk add --no-cache curl ca-certificates
@@ -7,7 +7,7 @@ RUN apk add --no-cache curl ca-certificates
 # 1. Define the version and architecture
 # For most servers (including Dokploy), this will be 'amd64'
 ARG VERSION=v0.3.3
-ARG ARCH=amd64
+ARG ARCH=arm64
 
 # 2. Download the binary directly from GitHub Releases
 # We name it 'starboard' and move it to the bin folder
