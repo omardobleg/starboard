@@ -1,15 +1,23 @@
-# --- Stage 1: Build ---
-FROM golang:1.21-alpine AS builder
-RUN apk add --no-cache git
-WORKDIR /src
-RUN git clone https://github.com/gzuidhof/starboard-cli.git .
-RUN go build -o /app/starboard .
-
-# --- Stage 2: Run ---
+# Use a lightweight base
 FROM alpine:latest
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /app/starboard /usr/local/bin/starboard
+
+# Install curl to download the binary
+RUN apk add --no-cache curl ca-certificates
+
+# 1. Define the version and architecture
+# For most servers (including Dokploy), this will be 'amd64'
+ARG VERSION=v0.3.3
+ARG ARCH=amd64
+
+# 2. Download the binary directly from GitHub Releases
+# We name it 'starboard' and move it to the bin folder
+RUN curl -L "https://github.com/gzuidhof/starboard-cli/releases/download/${VERSION}/starboard-linux-${ARCH}" -o /usr/local/bin/starboard \
+    && chmod +x /usr/local/bin/starboard
+
+# 3. Setup the workspace
 WORKDIR /notebooks
+
+# 4. Run the server
+# --host 0.0.0.0 is required so Dokploy/Docker can route traffic to it
 EXPOSE 8000
-# Important: We listen on 0.0.0.0 so Dokploy's proxy can reach it
 ENTRYPOINT ["starboard", "serve", "--host", "0.0.0.0", "--port", "8000", "."]
