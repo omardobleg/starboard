@@ -1,24 +1,20 @@
-# --- Stage 1: Build specifically for the host architecture ---
+# --- Stage 1: Build using the official Go installer ---
 FROM golang:1.21-alpine AS builder
 
-# Install git and build essentials
-RUN apk add --no-cache git build-base
+# Git is still needed for Go to fetch the source code
+RUN apk add --no-cache git
 
-WORKDIR /src
-
-# Clone the repo
-RUN git clone https://github.com/gzuidhof/starboard-cli.git .
-
-# Build the binary. 
-# CGO_ENABLED=0 makes the binary "static" and more portable.
-RUN CGO_ENABLED=0 go build -o /app/starboard .
+# This command fetches, resolves dependencies, and builds the binary automatically
+# It will place the resulting binary in /go/bin/
+RUN go install github.com/gzuidhof/starboard-cli@latest
 
 # --- Stage 2: Tiny Runner ---
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 
-# Copy the binary we just built
-COPY --from=builder /app/starboard /usr/local/bin/starboard
+# Note: 'go install' names the binary based on the repo name (starboard-cli)
+# We copy it over and rename it to just 'starboard' for convenience
+COPY --from=builder /go/bin/starboard-cli /usr/local/bin/starboard
 
 WORKDIR /notebooks
 EXPOSE 8000
