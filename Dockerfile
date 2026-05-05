@@ -12,15 +12,10 @@ WORKDIR /src/starboard
 RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
     -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
-# 2. THE AGGRESSIVE REPAIR
-# We use \s* to catch any combination of tabs/spaces.
-# We replace the whole line with the CDN link.
-RUN sed -i -E 's|iframeHost.*:=.*"http://localhost:".*portSecondary|iframeHost := "https://unpkg.com"|g' internal/nbserver/handler.go
-
-# 3. VERIFICATION (This won't crash the build)
-# This will print the lines containing "iframeHost" so you can see the result.
-RUN grep "iframeHost" internal/nbserver/handler.go || true
-
+# 2. THE MASTER BRANCH PATCH
+# We look for the line that sets iframeHost to localhost and force it to unpkg.
+# This targets line 57: iframeHost = "http://localhost:" + portSecondary
+RUN sed -i 's|iframeHost = "http://localhost:" + portSecondary|iframeHost = "https://unpkg.com"|g' internal/nbserver/handler.go
 # 2. Compile the binary 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /app/starboard .
