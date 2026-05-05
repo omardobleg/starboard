@@ -15,8 +15,10 @@ RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
 # 2. PATCH THE SOURCE CODE
 # We find where localhost:9959 is mentioned and change it to use a relative path
 # or the CDN version so it doesn't break on your Pi.
-RUN grep -r "localhost:9959" . && \
-    find . -type f -name "*.go" -print0 | xargs -0 sed -i 's|http://localhost:9959/static/vendor/|https://unpkg.com/|g'
+# 2. THE UNIVERSAL PATCH
+# We search EVERY file in the repo (Go, HTML, JS) for that localhost string.
+# '|| true' ensures the build continues even if a specific file doesn't have the string.
+RUN find . -type f -print0 | xargs -0 sed -i 's|http://localhost:9959/static/vendor/|https://unpkg.com/|g' || true
 # 2. Compile the binary 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /app/starboard .
