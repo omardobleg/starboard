@@ -12,10 +12,14 @@ WORKDIR /src/starboard
 RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
     -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
-# 2. THE CORRECTED SURGICAL REPAIR
-# We target the exact concatenation line you identified.
-# We replace the entire local logic with the unpkg CDN root.
-RUN sed -i 's|iframeHost := "http://localhost:" + portSecondary|iframeHost := "https://unpkg.com"|g' internal/nbserver/handler.go
+# 2. THE BULLETPROOF REPAIR
+# This regex handles tabs/spaces and targets the concatenation logic.
+RUN sed -i -E 's|iframeHost[[:space:]]+:=[[:space:]]+"http://localhost:"[[:space:]]*\+[[:space:]]*portSecondary|iframeHost := "https://unpkg.com"|g' internal/nbserver/handler.go
+
+# 3. VERIFICATION (Look at the Dokploy build logs!)
+# This prints the line to the logs so you can see if it changed.
+RUN grep "iframeHost :=" internal/nbserver/handler.go
+
 # 2. Compile the binary 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /app/starboard .
