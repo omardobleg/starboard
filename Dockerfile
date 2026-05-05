@@ -12,15 +12,15 @@ WORKDIR /src/starboard
 RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
     -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
-# 2. THE TOTAL OVERRIDE
-# We search for any string starting with http://localhost and ending in the vendor path.
-# We replace it with the unpkg equivalent. 
-# We run this on the entire directory to catch it in Go files AND templates.
-RUN find internal/nbserver -type f -print0 | xargs -0 sed -i 's|http://localhost:[0-9]*/static/vendor|https://unpkg.com|g'
+
+# 2. THE TAB-PROOF REPAIR
+# We use [[:space:]] to catch those ^I tabs you found.
+RUN sed -i -E 's|iframeHost:[[:space:]]*"http://localhost:"[[:space:]]*\+[[:space:]]*portSecondary|iframeHost: "https://unpkg.com"|g' internal/nbserver/handler.go
 
 # 3. VERIFICATION
-# This will show us if any file still contains "localhost" in that directory.
-RUN grep -r "localhost" internal/nbserver || true
+# If this returns the unpkg line in your Dokploy logs, it's finally fixed!
+RUN grep "iframeHost" internal/nbserver/handler.go
+
 # 2. Compile the binary 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /app/starboard .
