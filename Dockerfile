@@ -1,5 +1,5 @@
 # Use a lightweight base
-FROM arm32v7/alpine:latest
+FROM arm64v8/alpine:3.20
 
 # Install curl to download the binary
 RUN apk add --no-cache curl ca-certificates
