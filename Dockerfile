@@ -13,12 +13,11 @@ RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
     -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
 
-# 2. THE TAB-PROOF REPAIR
-# We use [[:space:]] to catch those ^I tabs you found.
-RUN sed -i -E 's|iframeHost:[[:space:]]*"http://localhost:"[[:space:]]*\+[[:space:]]*portSecondary|iframeHost: "https://unpkg.com"|g' internal/nbserver/handler.go
+# 2. THE PATH-REMOVAL REPAIR
+# We match the entire line including the "/static/vendor" suffix and remove it.
+RUN sed -i -E 's|iframeHost:[[:space:]]*"http://localhost:"[[:space:]]*\+[[:space:]]*portSecondary[[:space:]]*\+[[:space:]]*"/static/vendor"|iframeHost: "https://unpkg.com"|g' internal/nbserver/handler.go
 
 # 3. VERIFICATION
-# If this returns the unpkg line in your Dokploy logs, it's finally fixed!
 RUN grep "iframeHost" internal/nbserver/handler.go
 
 # 2. Compile the binary 
