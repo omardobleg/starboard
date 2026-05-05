@@ -15,16 +15,16 @@ COPY --from=builder /app/starboard /usr/local/bin/starboard
 
 # We create the static folder INSIDE the notebooks directory
 # This ensures that when the server runs in ".", it finds the static files
+
+# 1. Ensure the directory exists where you found it working
 WORKDIR /notebooks/static/vendor/starboard-wrap@0.2.5/dist/
 RUN curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js -o index.min.js
 
-# Go back to the notebooks root
+# 2. Create a symbolic link at the ROOT so the editor can find it
+# This maps /static to /notebooks/static
+RUN ln -s /notebooks/static /static
+
 WORKDIR /notebooks
-
-# Initialize a default notebook so the editor has something to load
-RUN echo "# %% [markdown]\n# Welcome to Starboard on Pi 4\n" > my-first-notebook.starboard
-
 EXPOSE 8000
 
-# Run the server from /notebooks
 ENTRYPOINT ["starboard", "serve", "--port", "8000", "."]
