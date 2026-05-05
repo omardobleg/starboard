@@ -1,20 +1,29 @@
-# --- Stage 1: Build using the official Go installer ---
+# --- Stage 1: Build ---
 FROM golang:1.21-alpine AS builder
 
-# Git is still needed for Go to fetch the source code
-RUN apk add --no-cache git
+# Install git and build tools
+RUN apk add --no-cache git build-base
 
-# This command fetches, resolves dependencies, and builds the binary automatically
-# It will place the resulting binary in /go/bin/
-RUN go install github.com/gzuidhof/starboard-cli@latest
+WORKDIR /src
 
-# --- Stage 2: Tiny Runner ---
+# 1. Clone the repo
+RUN git clone https://github.com/gzuidhof/starboard-cli.git .
+
+# 2. Force-initialize the module system to fix the "cannot find main module" error
+# This creates a dummy go.mod that tells Go "treat this folder as the source"
+RUN go mod init starboard-build || true
+RUN go mod tidy
+
+# 3. Build the binary statically
+# We use -o starboard to name the output file
+RUN CGO_ENABLED=0 go build -o /app/starboard main.go
+
+# --- Stage 2: Runner ---
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 
-# Note: 'go install' names the binary based on the repo name (starboard-cli)
-# We copy it over and rename it to just 'starboard' for convenience
-COPY --from=builder /go/bin/starboard-cli /usr/local/bin/starboard
+# Copy the binary from the builder
+COPY --from=builder /app/starboard /usr/local/bin/starboard
 
 WORKDIR /notebooks
 EXPOSE 8000
