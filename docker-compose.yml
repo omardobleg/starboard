@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  starboard:
+    build: .
+    volumes:
+      - starboard_data:/notebooks
+    restart: always
+    # We don't need to specify ports here if using Dokploy's 
+    # internal networking, but we will configure the "Port" in the UI.
+
+volumes:
+  starboard_data:
