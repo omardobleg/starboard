@@ -12,10 +12,10 @@ WORKDIR /src/starboard
 RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
     -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
-# 2. THE SURGICAL REPAIR
-# We target the exact line in internal/nbserver/handler.go
-# We change the iframeHost to point to the CDN version of the notebook
-RUN sed -i 's|iframeHost := "http://localhost:9959/static/vendor"|iframeHost := "https://unpkg.com"|g' internal/nbserver/handler.go
+# 2. THE CORRECTED SURGICAL REPAIR
+# We target the exact concatenation line you identified.
+# We replace the entire local logic with the unpkg CDN root.
+RUN sed -i 's|iframeHost := "http://localhost:" + portSecondary|iframeHost := "https://unpkg.com"|g' internal/nbserver/handler.go
 # 2. Compile the binary 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /app/starboard .
