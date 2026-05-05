@@ -9,9 +9,9 @@ RUN git clone https://github.com/gzuidhof/starboard-cli.git .
 
 # 1. ADD THE JS TO THE REPO BEFORE BUILD
 WORKDIR /src/starboard
-RUN mkdir -p static/vendor/starboard-wrap@0.2.5/dist/ && \
+RUN mkdir -p web/static/vendor/starboard-wrap@0.2.5/dist/ && \
     curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js \
-    -o static/vendor/starboard-wrap@0.2.5/dist/index.min.js
+    -o web/static/vendor/starboard-wrap@0.2.5/dist/index.min.js
 
 # 2. Compile the binary 
 RUN go mod download
