@@ -5,7 +5,6 @@ WORKDIR /src
 RUN git clone https://github.com/gzuidhof/starboard-cli.git .
 WORKDIR /src/starboard
 RUN go mod download
-# We build the binary here
 RUN CGO_ENABLED=0 go build -o /app/starboard .
 
 # --- Stage 2: Final Image ---
@@ -14,12 +13,18 @@ RUN apk add --no-cache ca-certificates curl
 
 COPY --from=builder /app/starboard /usr/local/bin/starboard
 
-# FIX: Manually create the directory structure the 404 is looking for
-WORKDIR /static/vendor/starboard-wrap@0.2.5/dist/
+# We create the static folder INSIDE the notebooks directory
+# This ensures that when the server runs in ".", it finds the static files
+WORKDIR /notebooks/static/vendor/starboard-wrap@0.2.5/dist/
 RUN curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js -o index.min.js
 
-# Return to notebook directory
+# Go back to the notebooks root
 WORKDIR /notebooks
+
+# Initialize a default notebook so the editor has something to load
+RUN echo "# %% [markdown]\n# Welcome to Starboard on Pi 4\n" > my-first-notebook.starboard
+
 EXPOSE 8000
 
+# Run the server from /notebooks
 ENTRYPOINT ["starboard", "serve", "--port", "8000", "."]
