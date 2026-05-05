@@ -13,18 +13,22 @@ RUN apk add --no-cache ca-certificates curl
 
 COPY --from=builder /app/starboard /usr/local/bin/starboard
 
-# We create the static folder INSIDE the notebooks directory
-# This ensures that when the server runs in ".", it finds the static files
-
-# 1. Ensure the directory exists where you found it working
+# 1. Create the EXACT path that worked for you under /browse
+# Since the server adds /browse to the working directory, 
+# we put the file in static/... right where we start.
 WORKDIR /notebooks/static/vendor/starboard-wrap@0.2.5/dist/
 RUN curl -L https://unpkg.com/starboard-wrap@0.2.5/dist/index.min.js -o index.min.js
 
-# 2. Create a symbolic link at the ROOT so the editor can find it
-# This maps /static to /notebooks/static
-RUN ln -s /notebooks/static /static
+# 2. THE FIX: Create a duplicate at the system root just in case
+RUN mkdir -p /static/vendor/starboard-wrap@0.2.5/dist/ && \
+    cp index.min.js /static/vendor/starboard-wrap@0.2.5/dist/index.min.js
 
 WORKDIR /notebooks
+
+# 3. Create a starting notebook
+RUN echo "# %% [markdown]\n# Welcome to Starboard\n" > my-first-notebook.starboard
+
 EXPOSE 8000
 
+# We run with the -v (verbose) flag if available to see path errors in Dokploy logs
 ENTRYPOINT ["starboard", "serve", "--port", "8000", "."]
